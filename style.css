@@ -102,8 +102,12 @@ footer {
   color: var(--muted);
 }
 
-.lang {
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px dashed var(--line);
+footer p { margin: 6px 0; }
+
+.lang-switch {
+  line-height: 1.9;
+}
+
+.lang-switch strong {
+  color: var(--text);
 }
