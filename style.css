@@ -79,6 +79,17 @@ a { color: var(--violet); }
   color: transparent;
 }
 
+a.store {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);
