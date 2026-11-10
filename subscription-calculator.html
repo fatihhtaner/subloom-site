@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subscription Calculator: what do your subscriptions cost per year?</title>
+  <meta name="description" content="Add your subscriptions and see what they really cost per month and per year. Weekly, monthly, quarterly and yearly plans in one total. Runs in your browser.">
+  <meta name="apple-itunes-app" content="app-id=6818321093">
+  <meta property="og:title" content="Subscription Calculator">
+  <meta property="og:description" content="What do your subscriptions really cost per month and per year?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fatihhtaner.github.io/subloom-site/subscription-calculator.html">
+  <meta property="og:image" content="https://fatihhtaner.github.io/subloom-site/icon.png">
+  <link rel="canonical" href="https://fatihhtaner.github.io/subloom-site/subscription-calculator.html">
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .calc .row { display: grid; grid-template-columns: 1fr 110px 130px 36px; gap: 8px; margin: 8px 0; }
+    .calc input, .calc select { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; min-width: 0; }
+    .calc button.del { border: 0; background: none; color: var(--muted); font-size: 22px; cursor: pointer; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+    .chips button { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+    .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
+    .totals strong { display: block; font-size: 28px; }
+    .totals .year strong { background: linear-gradient(135deg, var(--violet), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 34px; }
+    .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    a.store { display: inline-block; margin-top: 8px; padding: 14px 24px; border-radius: 14px; background: linear-gradient(135deg, var(--violet), var(--pink)); color: #fff; font-weight: 700; text-decoration: none; }
+    @media (max-width: 520px) { .calc .row { grid-template-columns: 1fr 90px 36px; } .calc .row select { grid-column: 1 / 3; } .totals strong { font-size: 22px; } .totals .year strong { font-size: 26px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header class="brand">
+    <img src="icon.png" alt="">
+    <a href="./">Subloom</a>
+  </header>
+
+  <section class="hero">
+    <h1>Subscription calculator</h1>
+    <p class="muted">Add what you pay for. See what it really costs per month and per year.</p>
+  </section>
+
+  <div class="card calc">
+    <div class="head">
+      <strong>Your subscriptions</strong>
+      <label class="muted">Currency
+        <select id="cur" aria-label="Currency"><option>$</option><option>€</option><option>£</option><option>₺</option><option>¥</option><option>₹</option><option>R$</option><option>kr</option></select>
+      </label>
+    </div>
+    <div id="rows"></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="card totals" aria-live="polite">
+    <div><span class="muted">Per month</span><strong id="month">0</strong></div>
+    <div class="year"><span class="muted">Per year</span><strong id="year">0</strong></div>
+    <div><span class="muted">Per day</span><strong id="day">0</strong></div>
+  </div>
+
+  <div class="card">
+    <strong>Keep this total in your pocket</strong>
+    <p class="muted">Subloom keeps every subscription on one screen, shows your monthly and yearly total and reminds you before each charge and before free trials end. No account, no bank connection.</p>
+    <a class="store" href="https://apps.apple.com/app/id6818321093">Search “Subloom” on the App Store</a>
+  </div>
+
+  <h2>How the calculator works</h2>
+  <p>Every plan is turned into a monthly cost: weekly plans × 52 ÷ 12, quarterly ÷ 3, every six months ÷ 6 and yearly ÷ 12. The yearly total is the monthly total × 12, and the daily figure is the yearly total ÷ 365.</p>
+  <h2>Why add them up?</h2>
+  <p>Subscriptions are small one by one: a video service, music, cloud storage, an AI assistant, a gym. Together they are often one of the larger fixed costs in a budget, and free trials quietly turn into paid plans. Seeing the yearly number makes it easier to decide what to keep.</p>
+  <h2>Is my list saved or sent anywhere?</h2>
+  <p>No. The calculator runs in your browser. Your list is kept only on this device so it's there when you come back; nothing is sent to us or anyone else.</p>
+
+  <footer>
+    <p><a href="support.html">Support</a> · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a> · © 2026 Subloom</p>
+  </footer>
+</main>
+<script>
+const PRESETS = ['Video streaming', 'Music', 'Cloud storage', 'AI assistant', 'Gaming', 'News', 'Gym', 'Software', 'Phone plan', 'Other'];
+const CYCLES = [['week', 'Weekly', 52 / 12], ['month', 'Monthly', 1], ['quarter', 'Every 3 months', 1 / 3], ['half', 'Every 6 months', 1 / 6], ['year', 'Yearly', 1 / 12]];
+const KEY = 'subloom-calculator';
+let state = { cur: '$', rows: [{ name: 'Video streaming', price: '', cycle: 'month' }, { name: 'Music', price: '', cycle: 'month' }, { name: 'Cloud storage', price: '', cycle: 'month' }] };
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved && saved.rows) state = saved; } catch (e) {}
+const $ = id => document.getElementById(id);
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const num = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) && v > 0 ? v : 0; };
+const fmt = v => state.cur + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2));
+function totals() {
+  const month = state.rows.reduce((s, r) => s + num(r.price) * (CYCLES.find(c => c[0] === r.cycle) || CYCLES[1])[2], 0);
+  $('month').textContent = fmt(month); $('year').textContent = fmt(month * 12); $('day').textContent = fmt(month * 12 / 365);
+  save();
+}
+function render() {
+  $('cur').value = state.cur;
+  $('rows').innerHTML = '';
+  state.rows.forEach((r, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = '<input aria-label="Name" maxlength="40"><input aria-label="Price" inputmode="decimal" placeholder="0.00"><select aria-label="Billing cycle"></select><button class="del" aria-label="Remove">×</button>';
+    const [name, price, cycle, del] = row.children;
+    name.value = r.name; price.value = r.price;
+    CYCLES.forEach(([k, label]) => cycle.add(new Option(label, k)));
+    cycle.value = r.cycle;
+    name.oninput = () => { r.name = name.value; save(); };
+    price.oninput = () => { r.price = price.value; totals(); };
+    cycle.onchange = () => { r.cycle = cycle.value; totals(); };
+    del.onclick = () => { state.rows.splice(i, 1); render(); };
+    $('rows').appendChild(row);
+  });
+  totals();
+}
+PRESETS.forEach(p => { const b = document.createElement('button'); b.textContent = '+ ' + p; b.onclick = () => { state.rows.push({ name: p, price: '', cycle: 'month' }); render(); $('rows').lastChild.children[1].focus(); }; $('chips').appendChild(b); });
+$('cur').onchange = () => { state.cur = $('cur').value; totals(); };
+render();
+</script>
+</body>
+</html>

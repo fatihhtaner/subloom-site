@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fatihhtaner.github.io/subloom-site/sitemap.xml
